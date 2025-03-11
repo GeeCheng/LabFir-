@@ -361,8 +361,6 @@ module fir
     end
     
     reg [31:0] x_cnt;
-    wire [31:0] x_cnt_wire;
-    
     
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
@@ -382,15 +380,6 @@ module fir
     
     reg [31:0] h_reg;
     reg [31:0] x_reg;
-    
-    wire [31:0] h_wire;
-    wire [31:0] x_wire;
-    
-    assign h_wire = h_reg;
-    assign x_wire = x_reg;
-    assign m_tmp_wire = m_tmp_reg;
-    
-    wire [31:0] m_tmp_wire;
     
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
