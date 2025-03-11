@@ -40,23 +40,9 @@ module fir
     input   wire [(pDATA_WIDTH-1):0] data_Do,
 
     input   wire                     axis_clk,
-    input   wire                     axis_rst_n,
-    
-    output                           k_wire,
-    output                           x_cnt_wire,
-    output                           h_wire,
-    output                           x_wire,
-    output                           m_tmp_wire,
-    output                           ss_idle_wire,
-    output                           ap_idle_wire
+    input   wire                     axis_rst_n
 );
 
-    wire ss_idle_wire;
-    wire ap_idle_wire;
-
-    
-    assign ss_idle_wire = ss_idle;
-    assign ap_idle_wire = ap_idle;
     
     
     //--------------------------------------------------------------------
@@ -88,7 +74,7 @@ module fir
                           : (k > 33) || (k == 0) ? 0 : 1;    
     assign tap_WE = (awvalid && wvalid ==  1'b1 && (awaddr[11:8] == 4'd0 && awaddr[7] == 1'b1)) ? 4'b1111 : 4'b0000;
     assign tap_A  = (wvalid && wready) ? awaddr[6:0] : tap_AR[6:0];
-    assign tap_Di = wdata;
+    assign tap_Di = (awaddr < 12'h80 + 4 * coeff_len) ? wdata : 0;
     
     assign rdata = (araddr == 0) ? ap_control : tap_Do;
     
@@ -109,7 +95,7 @@ module fir
         if (~axis_rst_n) begin
             awready_reg <= 0;
         end else begin
-            awready_reg <= (awready && awvalid) ? 0 : (number_of_tap_data < 6'd32) ? 1 : 0;
+            awready_reg <= (awready && awvalid) ? 0 : (number_of_tap_data < coeff_len || araddr == 0) ? 1 : 0;
         end
     end
     
@@ -129,7 +115,7 @@ module fir
         if (~axis_rst_n) begin
             wready_reg <= 0;
         end else begin
-            wready_reg <= (wready && wvalid) ? 0 : (number_of_tap_data < 6'd32) ? 1 : 0;
+            wready_reg <= (wready && wvalid) ? 0 : (number_of_tap_data < coeff_len || araddr == 0) ? 1 : 0;
         end
     end
     
@@ -273,7 +259,7 @@ module fir
     reg sm_tlast_reg;
     reg sm_tlast_reg_next;
     assign sm_tlast = sm_tlast_reg;
-    assign final_Y = data_output_length == data_len ;
+    assign final_Y = data_output_length == data_len - 1 ;
     
     parameter SMIDLE = 0;
     parameter SMDONE = 1;
@@ -321,10 +307,10 @@ module fir
     
     reg [11:0]   init_addr;
     
-    assign data_EN       = data_en_reg;
+    assign data_EN       = 1;
     assign data_WE       = ap_idle ? (init_addr  < 12'h80) ? 4'b1111 : 4'b0000
                             : (ss_tvalid && ss_idle && k == 0) ? 4'b1111 : 0;
-    assign data_A        = ap_idle && (init_addr  < 12'h80) ? init_addr : data_A_tmp;
+    assign data_A        = ap_idle ? init_addr : data_A_tmp;
     assign data_Di       = ap_idle ? 0 : ss_tdata;
     assign data_read_reg = data_Do;
     
@@ -339,29 +325,27 @@ module fir
         end
     end
     
-    reg data_en_reg;
-    always @ (posedge axis_clk or negedge axis_rst_n) begin
-        if (~axis_rst_n) begin
-            data_en_reg <= 0;
-        end else begin
-            data_en_reg <= (ss_tvalid && ss_tready) ? 0 : 1;
-        end
-    end   
-    
     //--------------------------------------------------------------------
     // address generator for data_ram and pointer control
     //--------------------------------------------------------------------  
     
-    assign k_wire = k;
-    assign x_cnt_wire = x_cnt;
-    
     reg [5:0] k;
-    wire [5:0] k_wire; 
+    wire [5:0] k_wire;
+
+    reg [5:0] k_next;
+    always @* begin
+        case (k)
+            coeff_len + 3: k_next = (ap_idle == 0) ? ((sm_tvalid) ? 0     : k   ): 0;
+            0            : k_next = (ap_idle == 0) ? ((ss_tready) ? k + 1 : 0   ): 0;
+            default      : k_next = (ap_idle == 0) ? k + 1: 0;
+        endcase 
+    end
+    
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             k <= 0;
         end else begin
-            k <=  (ap_idle == 0) ? ((k == 35) ? 0 : k + 1) : 0;
+            k <= k_next;
         end
     end
     
@@ -372,7 +356,7 @@ module fir
         if (~axis_rst_n) begin
             init_addr <= 0;
         end else begin
-            init_addr <= (ap_idle && init_addr < 12'h80) ? init_addr + 4 : init_addr;
+            init_addr <= (ap_idle) ? (init_addr < 12'h80) ? init_addr + 4 : 0 : init_addr;
         end
     end
     
@@ -384,12 +368,12 @@ module fir
         if (~axis_rst_n) begin
             x_cnt <= 0;
         end else begin
-            x_cnt <= (ap_idle==0) && (k == 32) ? ((x_cnt == 31)? 0 : x_cnt + 1) : x_cnt ;
+            x_cnt <= (ap_idle==0) && (k == coeff_len) ? ((x_cnt == coeff_len - 1)? 0 : x_cnt + 1) : x_cnt ;
         end
     end
 
     wire [11:0] data_A_tmp;
-    assign data_A_tmp = (k > 33) ? 0 : (k != 0) ? ( (k - 1 <= x_cnt) ? 4*(x_cnt + 1 - k) : 4*(32 + x_cnt + 1 - k) ) 
+    assign data_A_tmp = (k > coeff_len + 1) ? 0 : (k != 0) ? ( (k - 1 <= x_cnt) ? 4*(x_cnt + 1 - k) : 4*(coeff_len + x_cnt + 1 - k) ) 
                                     : 4*x_cnt;
     
     //--------------------------------------------------------------------
@@ -413,8 +397,8 @@ module fir
             h_reg   <= 0;
             x_reg   <= 0;
         end else begin
-            h_reg   <= (ap_idle == 0) ? (k > 33) ? 0 : tap_Do  : 0;
-            x_reg   <= (ap_idle == 0) ? (k > 33) ? 0 : data_Do : 0;
+            h_reg   <= (ap_idle == 0) ? (k > coeff_len + 1) ? 0 : (k == 1) ? 0 : tap_Do  : 0;
+            x_reg   <= (ap_idle == 0) ? (k > coeff_len + 1) ? 0 : (k == 1) ? 0 : data_Do : 0;
         end
     end
     
@@ -423,7 +407,7 @@ module fir
         if (~axis_rst_n) begin
             m_tmp_reg   <= 0;
         end else begin
-            m_tmp_reg   <= ss_idle  ? h_reg * x_reg : 0;
+            m_tmp_reg   <= ap_idle == 0  ? h_reg * x_reg : 0;
         end
     end
     
@@ -432,7 +416,7 @@ module fir
         if (~axis_rst_n) begin
             y_tmp_reg   <= 0;
         end else begin
-            y_tmp_reg   <= (k == 0) ? m_tmp_reg : ss_idle ? m_tmp_reg + y_tmp_reg : 0;
+            y_tmp_reg   <= (k == 0) ? m_tmp_reg : ap_idle == 0 ? m_tmp_reg + y_tmp_reg : 0;
         end
     end
     
@@ -442,7 +426,7 @@ module fir
         if (~axis_rst_n) begin
             sm_tvalid_reg   <= 0;
         end else begin
-            sm_tvalid_reg   <= ap_idle == 0 && (k == 35) ? 1 : 0;
+            sm_tvalid_reg   <= ap_idle == 0 && (k == coeff_len + 3) ? 1 : 0;
         end
     end
     
