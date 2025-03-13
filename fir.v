@@ -335,8 +335,8 @@ module fir
     reg [5:0] k_next;
     always @* begin
         case (k)
-            coeff_len + 3: k_next = (ap_idle == 0) ? ((sm_tvalid) ? 0     : k   ): 0;
-            0            : k_next = (ap_idle == 0) ? ((ss_tready) ? k + 1 : 0   ): 0;
+            coeff_len + 3: k_next = (ap_idle == 0) ? ((sm_tvalid && sm_tready) ? 0     : k   ): 0;
+            0            : k_next = (ap_idle == 0) ? ((ss_tready && ss_tvalid) ? k + 1 : 0   ): 0;
             default      : k_next = (ap_idle == 0) ? k + 1: 0;
         endcase 
     end
