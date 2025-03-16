@@ -105,7 +105,7 @@ module fir
         if (~axis_rst_n) begin
             arready_reg <= 0;
         end else begin
-            arready_reg <= (arready && arvalid) ? 0 : (number_of_tap_data > 0 && arvalid && ap_idle) ? 1 : 0;
+            arready_reg <= (arready && arvalid) ? 0 : (number_of_tap_data > 0 && arvalid ) ? 1 : 0;
         end
     end
     
@@ -125,7 +125,7 @@ module fir
         if (~axis_rst_n) begin
             rvalid_reg <= 0;
         end else begin
-            rvalid_reg <= (rready && rvalid) ? 0 : (number_of_tap_data > 0 && rready && ap_idle) ? 1 : 0;
+            rvalid_reg <= (rready && rvalid) ? 0 : (number_of_tap_data > 0 && rready) ? 1 : 0;
         end
     end
     
@@ -259,7 +259,7 @@ module fir
     reg sm_tlast_reg;
     reg sm_tlast_reg_next;
     assign sm_tlast = sm_tlast_reg;
-    assign final_Y = data_output_length == data_len - 1 ;
+    assign final_Y = data_output_length == data_len;
     
     parameter SMIDLE = 0;
     parameter SMDONE = 1;
@@ -419,7 +419,7 @@ module fir
         end
     end
     
-    assign sm_tdata = y_tmp_reg;
+    assign sm_tdata = (data_output_length == 100) ? 0 : y_tmp_reg;
     
     reg [31:0] data_input_length;
     always @ (posedge axis_clk or negedge axis_rst_n) begin
