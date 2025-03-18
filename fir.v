@@ -43,99 +43,26 @@ module fir
     input   wire                     axis_rst_n
 );
 
-    
-    
-    //--------------------------------------------------------------------
-    // Data and Coeff Length
-    //--------------------------------------------------------------------
-    
-    reg [31:0] data_len;
-    always @(posedge axis_clk or negedge axis_rst_n ) begin
-        if (~axis_rst_n) begin
-            data_len <= 0;
-        end else begin
-            data_len <= (awaddr == 12'h10) ? wdata : data_len;
-        end
-    end
-    
-    reg [31:0] coeff_len;
-    always @(posedge axis_clk or negedge axis_rst_n ) begin
-        if (~axis_rst_n) begin
-            coeff_len <= 0;
-        end else begin
-            coeff_len <= (awaddr == 12'h14) ? wdata: coeff_len;
-        end
-    end
     //--------------------------------------------------------------------
     // Axi Lite Interface for Tap RAM
     //--------------------------------------------------------------------
     
-    assign tap_EN = (ap_idle) ? (awaddr[11:8] == 4'd0 && awaddr[7] == 1'b1) || (tap_AR[11:8] == 4'd0 && tap_AR[7] == 1'b1)
-                          : (k > 33) || (k == 0) ? 0 : 1;    
-    assign tap_WE = (awvalid && wvalid ==  1'b1 && (awaddr[11:8] == 4'd0 && awaddr[7] == 1'b1)) ? 4'b1111 : 4'b0000;
-    assign tap_A  = (wvalid && wready) ? awaddr[6:0] : tap_AR[6:0];
-    assign tap_Di = (awaddr < 12'h80 + 4 * coeff_len) ? wdata : 0;
+    reg [11:0]  awaddr_buffer;
+    reg         awaddr_buffer_is_full;
+    reg         awready_reg;
+    assign      awready = awready_reg;
+    reg         wready_reg;
+    assign      wready = wready_reg;
+    reg         arready_reg;
+    assign      arready = arready_reg;
+    reg [11:0]  araddr_buffer;
+    reg         araddr_buffer_is_full;
+    reg [11:0]  rvalid_reg;
+    assign      rvalid = rvalid_reg;
     
-    assign rdata = (araddr == 0) ? ap_control : tap_Do;
-    
-    
-    reg [5:0] number_of_tap_data;
-    always @(posedge axis_clk or negedge axis_rst_n ) begin
-        if (~axis_rst_n) begin
-            number_of_tap_data <= 0;
-        end else begin
-            number_of_tap_data <= (number_of_tap_data == 31) ? 31: (wready && wvalid && awaddr[11:8] == 6'd0 && awaddr[7] == 1'b1)
-             ? number_of_tap_data + 1 : number_of_tap_data;
-        end
-    end
-    
-    reg awready_reg;
-    assign  awready = awready_reg ;
-    always @(posedge axis_clk or negedge axis_rst_n ) begin
-        if (~axis_rst_n) begin
-            awready_reg <= 0;
-        end else begin
-            awready_reg <= (awready && awvalid) ? 0 : (number_of_tap_data < coeff_len || araddr == 0) ? 1 : 0;
-        end
-    end
-    
-    reg arready_reg;
-    assign  arready = arready_reg ;
-    always @(posedge axis_clk or negedge axis_rst_n ) begin
-        if (~axis_rst_n) begin
-            arready_reg <= 0;
-        end else begin
-            arready_reg <= (arready && arvalid) ? 0 : (number_of_tap_data > 0 && arvalid ) ? 1 : 0;
-        end
-    end
-    
-    reg wready_reg;
-    assign wready = wready_reg ;
-    always @(posedge axis_clk or negedge axis_rst_n ) begin
-        if (~axis_rst_n) begin
-            wready_reg <= 0;
-        end else begin
-            wready_reg <= (wready && wvalid) ? 0 : (number_of_tap_data < coeff_len || araddr == 0) ? 1 : 0;
-        end
-    end
-    
-    reg rvalid_reg;
-    assign  rvalid = rvalid_reg;
-    always @(posedge axis_clk or negedge axis_rst_n ) begin
-        if (~axis_rst_n) begin
-            rvalid_reg <= 0;
-        end else begin
-            rvalid_reg <= (rready && rvalid) ? 0 : (number_of_tap_data > 0 && rready) ? 1 : 0;
-        end
-    end
-    
-    //--------------------------------------------------------------------
-    // ALL FSM
-    //--------------------------------------------------------------------
-    
-    ////////////////////////
-    // implementation reg //
-    ////////////////////////
+    reg [31:0] RAM_0x10;
+    reg [5:0] RAM_0x14;
+    reg [5:0] tap_input_len;
     
     reg [1:0]   ap_state;
     reg [1:0]   ap_state_next;
@@ -149,18 +76,184 @@ module fir
     assign      ap_start = ap_control[0];
     assign      ap_done  = ap_control[1];
     assign      ap_idle  = ap_control[2];
-    ////////////////////////
-    // fsm for ap_control //
-    ////////////////////////
     
     parameter [1:0] APINIT = 2'b00;
     parameter [1:0] APIDLE = 2'b01;
     parameter [1:0] APDONE = 2'b10;
     
+    reg ss_state;
+    reg ss_state_next;
+    
+    reg ss_idle;
+    
+    parameter SSIDLE = 1'b0;
+    parameter SSDONE = 1'b1;
+
+    reg [2:0] poll_cnt;
+    
+    reg sm_state;
+    reg sm_state_next;
+    reg sm_tlast_reg;
+    reg sm_tlast_reg_next;
+
+    
+    parameter SMIDLE = 0;
+    parameter SMDONE = 1;
+
+    reg [11:0]   init_addr;
+    
+    reg    ss_tready_reg;
+    assign ss_tready     = ss_tready_reg ;
+    
+    reg [5:0] k;
+    reg [5:0] k_next;
+    
+    wire [11:0] tap_AR;
+
+    
+    reg refresh_done_f;
+    
+    reg [31:0] x_cnt;
+    
+    wire [11:0] data_A_tmp;
+    
+    reg [31:0] h_reg;
+    reg [31:0] x_reg;
+    
+    reg [31:0] m_tmp_reg;
+    reg [31:0] y_tmp_reg;
+    reg sm_tvalid_reg;
+    reg [31:0] data_input_length;
+    
+    reg [31:0] data_output_length;
+    wire [31:0] data_output;
+
+    assign sm_tlast = sm_tlast_reg;
+    assign final_Y = data_output_length == RAM_0x10;
+
+    assign tap_EN = (ap_idle) ? (awaddr_buffer[11:8] == 4'd0 && awaddr_buffer[7] == 1'b1) || (tap_AR[11:8] == 4'd0 && tap_AR[7] == 1'b1)
+                          : (k > 33) || (k == 0) ? 0 : 1;    
+    assign tap_WE = (ap_idle && wready && wvalid && (awaddr_buffer[11:8] == 4'd0 && awaddr_buffer[7] == 1'b1)) ? 4'b1111 : 4'b0000;
+    assign tap_A  = (wready && wvalid && ap_idle) ? awaddr_buffer[6:0] : tap_AR[6:0];
+    assign tap_Di = wdata;
+    
+    assign rdata = (araddr_buffer == 12'h10) ? RAM_0x10 :
+                   (araddr_buffer == 12'h14) ? RAM_0x14 :
+                   (araddr_buffer == 12'h00) ? ap_control:
+                                               tap_Do;
+
+    assign tap_AR = (ap_idle == 0) ? ((k != 0) ? 12'h80 + 4*(k - 1) : 0 ): araddr_buffer;
+    assign data_A_tmp = (k > RAM_0x14 + 1) ? 0 : (k != 0) ? ( (k - 1 <= x_cnt) ? 4*(x_cnt + 1 - k) : 4*(RAM_0x14 + x_cnt + 1 - k) ) 
+                                    : 4*x_cnt;
+
+    assign data_EN       = 1;
+    assign data_WE       = ap_idle ? (init_addr  < 12'h80) ? 4'b1111 : 4'b0000
+                            : (ss_tvalid && ss_idle && k == 0) ? 4'b1111 : 0;
+    assign data_A        = ap_idle ? init_addr : data_A_tmp;
+    assign data_Di       = ap_idle ? 0 : ss_tdata;
+    
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            awaddr_buffer           <= 0;
+            awaddr_buffer_is_full   <= 0;
+        end else begin
+            awaddr_buffer           <= (awready && awvalid && ~awaddr_buffer_is_full) ? awaddr : awaddr_buffer;
+            if      (awaddr_buffer_is_full == 0 && awready && awvalid) awaddr_buffer_is_full <= 1;
+            else if (awaddr_buffer_is_full == 0)                       awaddr_buffer_is_full <= 0;
+            else if (awaddr_buffer_is_full == 1 && wready && wvalid  ) awaddr_buffer_is_full <= 0;
+            else if (awaddr_buffer_is_full == 1)                       awaddr_buffer_is_full <= 1;
+            else                                                       awaddr_buffer_is_full <= awaddr_buffer_is_full;
+        end
+    end
+    
+
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            awready_reg <= 0;
+        end else begin
+            awready_reg <= (awvalid && awready) ? 0 : (ap_idle) ? ~awaddr_buffer_is_full : 0;
+        end
+    end
+    
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            wready_reg  <= 0;
+        end else begin
+            wready_reg  <= (wready && wvalid) ? 0 : (ap_idle) ? awaddr_buffer_is_full : 0;
+        end
+    end
+    
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            arready_reg <= 0;
+        end else begin
+            arready_reg <= (arvalid && arready) ? 0 : (ap_idle) ? ~araddr_buffer_is_full : 0;
+        end
+    end
+   
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            araddr_buffer           <= 0;
+            araddr_buffer_is_full   <= 0;
+        end else begin
+            araddr_buffer           <= (arready && arvalid && ~araddr_buffer_is_full) ? araddr : araddr_buffer;
+            if      (araddr_buffer_is_full == 0 && arready && arvalid) araddr_buffer_is_full <= 1;
+            else if (araddr_buffer_is_full == 0)                       araddr_buffer_is_full <= 0;
+            else if (araddr_buffer_is_full == 1 && rready && rvalid  ) araddr_buffer_is_full <= 0;
+            else if (araddr_buffer_is_full == 1)                       araddr_buffer_is_full <= 1;
+            else                                                       araddr_buffer_is_full <= araddr_buffer_is_full;
+        end
+    end
+    
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            rvalid_reg  <= 0;
+        end else begin
+            rvalid_reg  <= (rready && rvalid) ? 0 : (ap_idle) ? araddr_buffer_is_full : 0;
+        end
+    end
+    
+    //--------------------------------------------------------------------
+    // Register for data_len
+    //--------------------------------------------------------------------
+
+    
+    //data length
+
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            RAM_0x10  <= 0;
+        end else begin
+            RAM_0x10  <= (awaddr_buffer == 12'h10 && wready && wvalid) ? wdata : RAM_0x10;
+        end
+    end
+    
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            RAM_0x14  <= 0;
+        end else begin
+            RAM_0x14  <= (awaddr_buffer == 12'h14 && wready && wvalid) ? wdata : RAM_0x14;
+        end
+    end
+    
+    always @(posedge axis_clk or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            tap_input_len  <= 0;
+        end else begin
+            tap_input_len  <= (~ ap_idle) ? 0 :
+                              (tap_input_len == 31) ? 31 : 
+                              (wready && wvalid && awaddr_buffer[11:8] == 0 && awaddr_buffer[7] == 1) ? tap_input_len + 1 : tap_input_len;
+        end
+    end
+    
+    //--------------------------------------------------------------------
+    // ALL FSM
+    //--------------------------------------------------------------------
+    
     always @* begin
         case (ap_state)
             APINIT: begin
-                if (wdata[0] == 1 && awaddr == 0) begin
+                if (wdata[0] == 1 && awaddr_buffer == 0) begin
                     ap_state_next      = APIDLE;
                     ap_control_next = 3'b001;
                 end else begin
@@ -171,19 +264,22 @@ module fir
             APIDLE: begin
                 if (sm_tlast) begin 
                     ap_state_next      = APDONE;
-                    ap_control_next = 3'b010;
+                    ap_control_next = 3'b110;
                 end else begin
                     ap_state_next      = APIDLE;
-                    ap_control_next = 3'b000;
+                    ap_control_next     = 3'b000;
                 end
             end
-            APDONE: begin
-                if (araddr == 0 && rdata == 32'h0000_0002 && rready && rvalid) begin
-                    ap_state_next       = APINIT;
-                    ap_control_next = 3'b100;
+            APDONE: begin     
+                if (refresh_done_f && poll_cnt != 0) begin
+                    ap_state_next      = APDONE;
+                    ap_control_next    = 3'b110;
+                end else if (poll_cnt == 0) begin
+                    ap_state_next      = APINIT; 
+                    ap_control_next    = 3'b100;
                 end else begin
-                    ap_state_next = APDONE;
-                    ap_control_next = 3'b110;
+                    ap_state_next      = APDONE; 
+                    ap_control_next    = 3'b100;
                 end
             end
             default: begin
@@ -192,7 +288,15 @@ module fir
             end
         endcase
     end
-
+    
+    always @ (posedge axis_clk  or negedge axis_rst_n) begin
+        if (~axis_rst_n) begin
+            poll_cnt        <= 5;
+        end else begin
+            poll_cnt        <= ap_start ? 5 : refresh_done_f ? poll_cnt - 1 : poll_cnt;
+        end
+    end
+    
     always @ (posedge axis_clk  or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             ap_state        <= 0;
@@ -202,18 +306,6 @@ module fir
             ap_control      <= ap_control_next;
         end
     end
-    
-    /////////////////////
-    // fsm for ss_idle //
-    /////////////////////
-    
-    reg ss_state;
-    reg ss_state_next;
-    
-    reg ss_idle;
-    
-    parameter SSIDLE = 1'b0;
-    parameter SSDONE = 1'b1;
     
     always @* begin
         case (ss_state)
@@ -249,20 +341,6 @@ module fir
             ss_state <= ss_state_next;
         end
     end
-    
-    ////////////////
-    // fsm for SM // 
-    ////////////////
-    
-    reg sm_state;
-    reg sm_state_next;
-    reg sm_tlast_reg;
-    reg sm_tlast_reg_next;
-    assign sm_tlast = sm_tlast_reg;
-    assign final_Y = data_output_length == data_len;
-    
-    parameter SMIDLE = 0;
-    parameter SMDONE = 1;
     
     always @* begin
         case (sm_state)
@@ -305,23 +383,11 @@ module fir
     // axi_stream for Data RAM
     //--------------------------------------------------------------------
     
-    reg [11:0]   init_addr;
-    
-    assign data_EN       = 1;
-    assign data_WE       = ap_idle ? (init_addr  < 12'h80) ? 4'b1111 : 4'b0000
-                            : (ss_tvalid && ss_idle && k == 0) ? 4'b1111 : 0;
-    assign data_A        = ap_idle ? init_addr : data_A_tmp;
-    assign data_Di       = ap_idle ? 0 : ss_tdata;
-    assign data_read_reg = data_Do;
-    
-    reg    ss_tready_reg;
-    assign ss_tready     = ss_tready_reg ;
-    
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             ss_tready_reg <= 0;
         end else begin
-            ss_tready_reg <= (ap_idle) ? 0 : ((ap_idle == 0 && k == 0) ? 1 : 0);
+            ss_tready_reg <= (ss_tready && ss_tvalid) ? 0 : (ap_idle) ? 0 : ((k == 0 && data_input_length != RAM_0x10) ? 1 : 0);
         end
     end
     
@@ -329,13 +395,9 @@ module fir
     // address generator for data_ram and pointer control
     //--------------------------------------------------------------------  
     
-    reg [5:0] k;
-    wire [5:0] k_wire;
-
-    reg [5:0] k_next;
     always @* begin
         case (k)
-            coeff_len + 3: k_next = (ap_idle == 0) ? ((sm_tvalid && sm_tready) ? 0     : k   ): 0;
+            RAM_0x14 + 3: k_next = (ap_idle == 0) ? ((sm_tvalid && sm_tready) ? 0     : k   ): 0;
             0            : k_next = (ap_idle == 0) ? ((ss_tready && ss_tvalid) ? k + 1 : 0   ): 0;
             default      : k_next = (ap_idle == 0) ? k + 1: 0;
         endcase 
@@ -349,49 +411,38 @@ module fir
         end
     end
     
-    wire [11:0] tap_AR;
-    assign tap_AR = (ap_idle == 0) ? (k != 0) ? 12'h80 + 4*(k - 1) : 0 : araddr ;
-    
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
-            init_addr <= 0;
+            init_addr           <= 0;
+            refresh_done_f      <= 0;
         end else begin
-            init_addr <= (ap_idle) ? (init_addr < 12'h80) ? init_addr + 4 : 0 : init_addr;
+            init_addr           <= (sm_tlast) ? 0 : (ap_idle) ? ((init_addr < 12'h80) ? init_addr + 4 : init_addr) : init_addr;
+            refresh_done_f      <= sm_tlast  ? 0 : (ap_state == APDONE) ? init_addr == 12'h80 : 0;
         end
     end
-    
-    reg [31:0] x_cnt;
     
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             x_cnt <= 0;
         end else begin
-            x_cnt <= (ap_idle==0) && (k == coeff_len) ? ((x_cnt == coeff_len - 1)? 0 : x_cnt + 1) : x_cnt ;
+            x_cnt <= ap_done ? 0 : (ap_idle==0) && (k == RAM_0x14) ? ((x_cnt == RAM_0x14 - 1)? 0 : x_cnt + 1) : x_cnt ;
         end
     end
-
-    wire [11:0] data_A_tmp;
-    assign data_A_tmp = (k > coeff_len + 1) ? 0 : (k != 0) ? ( (k - 1 <= x_cnt) ? 4*(x_cnt + 1 - k) : 4*(coeff_len + x_cnt + 1 - k) ) 
-                                    : 4*x_cnt;
     
     //--------------------------------------------------------------------
     // convolution calculation
     //--------------------------------------------------------------------  
-    
-    reg [31:0] h_reg;
-    reg [31:0] x_reg;
     
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             h_reg   <= 0;
             x_reg   <= 0;
         end else begin
-            h_reg   <= (ap_idle == 0) ? (k > coeff_len + 1) ? 0 : (k == 1) ? 0 : tap_Do  : 0;
-            x_reg   <= (ap_idle == 0) ? (k > coeff_len + 1) ? 0 : (k == 1) ? 0 : data_Do : 0;
+            h_reg   <= (ap_idle == 0) ? (k > RAM_0x14 + 1) ? 0 : (k == 1) ? 0 : tap_Do  : 0;
+            x_reg   <= (ap_idle == 0) ? (k > RAM_0x14 + 1) ? 0 : (k == 1 || k == 0) ? 0 : data_Do : 0;
         end
     end
     
-    reg [31:0] m_tmp_reg;
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             m_tmp_reg   <= 0;
@@ -400,7 +451,6 @@ module fir
         end
     end
     
-    reg [31:0] y_tmp_reg;
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             y_tmp_reg   <= 0;
@@ -409,35 +459,30 @@ module fir
         end
     end
     
-    reg sm_tvalid_reg;
     assign sm_tvalid = sm_tvalid_reg ;
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             sm_tvalid_reg   <= 0;
         end else begin
-            sm_tvalid_reg   <= ap_idle == 0 && (k == coeff_len + 3) ? 1 : 0;
+            sm_tvalid_reg   <= ap_idle == 0 && sm_tvalid && sm_tready ? 0 : (k == RAM_0x14 + 3) ? 1 : 0;
         end
     end
     
-    assign sm_tdata = (data_output_length == 100) ? 0 : y_tmp_reg;
+    assign sm_tdata = (data_output_length == RAM_0x10) ? 0 : y_tmp_reg;
     
-    reg [31:0] data_input_length;
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             data_input_length   <= 0;
         end else begin
-            data_input_length   <= (ss_tvalid && ss_tready) ? data_input_length + 1 : data_input_length;
+            data_input_length   <= ap_done ? 0 :(ss_tvalid && ss_tready) ? data_input_length + 1 : data_input_length;
         end
     end
-    
-    reg [31:0] data_output_length;
-    wire [31:0] data_output;
-    assign  data_output  = data_output_length ;
+
     always @ (posedge axis_clk or negedge axis_rst_n) begin    
         if (~axis_rst_n) begin
             data_output_length   <= 0;
         end else begin
-            data_output_length   <= (sm_tvalid && sm_tready) ? data_output_length + 1 : data_output_length;
+            data_output_length   <= ap_done  ? 0 :(sm_tvalid && sm_tready) ? data_output_length + 1 : data_output_length;
         end
     end
 endmodule
