@@ -1,0 +1,6 @@
+INFO: [VRFC 10-2263] Analyzing Verilog file "/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/bram32.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module bram32
+INFO: [VRFC 10-2263] Analyzing Verilog file "/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module fir
+INFO: [VRFC 10-2263] Analyzing Verilog file "/home/ubuntu/Vivado/Fir/Fir.srcs/sim_1/new/tb.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module fir_tb
