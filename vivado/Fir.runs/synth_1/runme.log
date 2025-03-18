@@ -1,0 +1,308 @@
+
+*** Running vivado
+    with args -log fir.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source fir.tcl
+
+
+****** Vivado v2022.1 (64-bit)
+  **** SW Build 3526262 on Mon Apr 18 15:47:01 MDT 2022
+  **** IP Build 3524634 on Mon Apr 18 20:55:01 MDT 2022
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+source fir.tcl -notrace
+create_project: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2865.457 ; gain = 0.023 ; free physical = 2539 ; free virtual = 6286
+Command: read_checkpoint -auto_incremental -incremental /home/ubuntu/Vivado/Fir/Fir.srcs/utils_1/imports/synth_1/fir.dcp
+INFO: [Vivado 12-5825] Read reference checkpoint from /home/ubuntu/Vivado/Fir/Fir.srcs/utils_1/imports/synth_1/fir.dcp for incremental synthesis
+INFO: [Vivado 12-7989] Please ensure there are no constraint changes
+Command: synth_design -top fir -part xc7z020clg400-1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7z020'
+INFO: [Designutils 20-5440] No compile time benefit to using incremental synthesis; A full resynthesis will be run
+INFO: [Designutils 20-4379] Flow is switching to default flow due to incremental criteria not met. If you would like to alter this behaviour and have the flow terminate instead, please set the following parameter config_implementation {autoIncr.Synth.RejectBehavior Terminate}
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 4 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 113733
+WARNING: [Synth 8-6901] identifier 'ap_idle' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:50]
+WARNING: [Synth 8-6901] identifier 'awaddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:50]
+WARNING: [Synth 8-6901] identifier 'awaddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:50]
+WARNING: [Synth 8-6901] identifier 'tap_AR' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:50]
+WARNING: [Synth 8-6901] identifier 'tap_AR' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:50]
+WARNING: [Synth 8-6901] identifier 'k' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:51]
+WARNING: [Synth 8-6901] identifier 'k' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:51]
+WARNING: [Synth 8-6901] identifier 'ap_idle' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:52]
+WARNING: [Synth 8-6901] identifier 'awaddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:52]
+WARNING: [Synth 8-6901] identifier 'awaddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:52]
+WARNING: [Synth 8-6901] identifier 'ap_idle' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:53]
+WARNING: [Synth 8-6901] identifier 'awaddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:53]
+WARNING: [Synth 8-6901] identifier 'tap_AR' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:53]
+WARNING: [Synth 8-6901] identifier 'araddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:56]
+WARNING: [Synth 8-6901] identifier 'RAM_0x10' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:56]
+WARNING: [Synth 8-6901] identifier 'araddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:57]
+WARNING: [Synth 8-6901] identifier 'RAM_0x14' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:57]
+WARNING: [Synth 8-6901] identifier 'araddr_buffer' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:58]
+WARNING: [Synth 8-6901] identifier 'ap_control' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:58]
+WARNING: [Synth 8-9887] parameter declaration becomes local in 'fir' with formal parameter declaration list [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:91]
+WARNING: [Synth 8-9887] parameter declaration becomes local in 'fir' with formal parameter declaration list [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:92]
+WARNING: [Synth 8-9887] parameter declaration becomes local in 'fir' with formal parameter declaration list [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:93]
+WARNING: [Synth 8-9887] parameter declaration becomes local in 'fir' with formal parameter declaration list [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:100]
+WARNING: [Synth 8-9887] parameter declaration becomes local in 'fir' with formal parameter declaration list [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:101]
+WARNING: [Synth 8-6901] identifier 'data_output_length' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:110]
+WARNING: [Synth 8-9887] parameter declaration becomes local in 'fir' with formal parameter declaration list [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:112]
+WARNING: [Synth 8-9887] parameter declaration becomes local in 'fir' with formal parameter declaration list [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:113]
+WARNING: [Synth 8-6901] identifier 'k' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:120]
+WARNING: [Synth 8-6901] identifier 'data_A_tmp' is used before its declaration [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:121]
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 2865.457 ; gain = 0.000 ; free physical = 2082 ; free virtual = 5829
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'fir' [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:1]
+INFO: [Synth 8-226] default block is never used [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:309]
+INFO: [Synth 8-226] default block is never used [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:344]
+INFO: [Synth 8-5575] Util Can't resize: variable case item [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:397]
+INFO: [Synth 8-6155] done synthesizing module 'fir' (0#1) [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:1]
+WARNING: [Synth 8-6014] Unused sequential element tap_input_len_reg was removed.  [/home/ubuntu/Vivado/Fir/Fir.srcs/sources_1/new/fir.v:239]
+WARNING: [Synth 8-3917] design fir has port tap_A[11] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port tap_A[10] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port tap_A[9] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port tap_A[8] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port data_EN driven by constant 1
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2865.457 ; gain = 0.000 ; free physical = 2142 ; free virtual = 5890
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2865.457 ; gain = 0.000 ; free physical = 2144 ; free virtual = 5892
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7z020clg400-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 2144 ; free virtual = 5892
+---------------------------------------------------------------------------------
+INFO: [Device 21-403] Loading part xc7z020clg400-1
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:09 ; elapsed = 00:00:10 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 2119 ; free virtual = 5867
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input   33 Bit       Adders := 1     
+	   2 Input   32 Bit       Adders := 6     
+	   4 Input   12 Bit       Adders := 1     
+	   2 Input    8 Bit       Adders := 1     
+	   2 Input    6 Bit       Adders := 1     
+	   2 Input    3 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 7     
+	               12 Bit    Registers := 4     
+	                6 Bit    Registers := 1     
+	                3 Bit    Registers := 2     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 11    
++---Multipliers : 
+	              32x32  Multipliers := 1     
++---Muxes : 
+	   4 Input   32 Bit        Muxes := 1     
+	   2 Input   32 Bit        Muxes := 14    
+	   2 Input   12 Bit        Muxes := 7     
+	   2 Input    8 Bit        Muxes := 1     
+	   2 Input    7 Bit        Muxes := 1     
+	   3 Input    6 Bit        Muxes := 1     
+	   2 Input    6 Bit        Muxes := 1     
+	   2 Input    4 Bit        Muxes := 1     
+	   2 Input    3 Bit        Muxes := 4     
+	   4 Input    3 Bit        Muxes := 1     
+	   4 Input    2 Bit        Muxes := 1     
+	   2 Input    2 Bit        Muxes := 1     
+	   3 Input    2 Bit        Muxes := 1     
+	   2 Input    1 Bit        Muxes := 25    
+	   3 Input    1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 220 (col length:60)
+BRAMs: 280 (col length: RAMB18 60 RAMB36 30)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-7080] Parallel synthesis criteria is not met
+DSP Report: Generating DSP m_tmp_reg1, operation Mode is: A*B.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+DSP Report: Generating DSP m_tmp_reg1, operation Mode is: (PCIN>>17)+A*B.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+DSP Report: Generating DSP m_tmp_reg1, operation Mode is: A*B.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+DSP Report: Generating DSP m_tmp_reg1, operation Mode is: (PCIN>>17)+A*B.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+DSP Report: operator m_tmp_reg1 is absorbed into DSP m_tmp_reg1.
+WARNING: [Synth 8-3917] design fir has port tap_A[11] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port tap_A[10] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port tap_A[9] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port tap_A[8] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port tap_A[7] driven by constant 0
+WARNING: [Synth 8-3917] design fir has port data_EN driven by constant 1
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1803 ; free virtual = 5554
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++------------+----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name | DSP Mapping    | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++------------+----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|fir         | A*B            | 18     | 18     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|fir         | (PCIN>>17)+A*B | 18     | 16     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|fir         | A*B            | 18     | 16     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|fir         | (PCIN>>17)+A*B | 16     | 16     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
++------------+----------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:18 ; elapsed = 00:00:20 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1802 ; free virtual = 5554
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1802 ; free virtual = 5553
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1839 ; free virtual = 5591
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1839 ; free virtual = 5591
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1839 ; free virtual = 5591
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1839 ; free virtual = 5591
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1839 ; free virtual = 5591
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1839 ; free virtual = 5591
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+DSP Final Report (the ' indicates corresponding REG is set)
++------------+--------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name | DSP Mapping  | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++------------+--------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|fir         | A*B          | 17     | 17     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|fir         | PCIN>>17+A*B | 0      | 15     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
+|fir         | A*B          | 17     | 15     | -      | -      | 48     | 0    | 0    | -    | -    | -     | 0    | 0    | 
++------------+--------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+--------+------+
+|      |Cell    |Count |
++------+--------+------+
+|1     |BUFG    |     1|
+|2     |CARRY4  |    90|
+|3     |DSP48E1 |     3|
+|4     |LUT1    |    60|
+|5     |LUT2    |   242|
+|6     |LUT3    |   113|
+|7     |LUT4    |    64|
+|8     |LUT5    |    56|
+|9     |LUT6    |   111|
+|10    |FDCE    |   339|
+|11    |FDPE    |     4|
+|12    |IBUF    |   160|
+|13    |OBUF    |   169|
++------+--------+------+
+
+Report Instance Areas: 
++------+---------+-------+------+
+|      |Instance |Module |Cells |
++------+---------+-------+------+
+|1     |top      |       |  1412|
++------+---------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1839 ; free virtual = 5591
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 42 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.461 ; gain = 8.004 ; free physical = 1852 ; free virtual = 5604
+Synthesis Optimization Complete : Time (s): cpu = 00:00:25 ; elapsed = 00:00:27 . Memory (MB): peak = 2873.469 ; gain = 8.004 ; free physical = 1852 ; free virtual = 5604
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2873.469 ; gain = 0.000 ; free physical = 1937 ; free virtual = 5689
+INFO: [Netlist 29-17] Analyzing 93 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'fir' is not ideal for floorplanning, since the cellview 'fir' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2881.465 ; gain = 0.000 ; free physical = 1859 ; free virtual = 5611
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete, checksum: d1d57084
+INFO: [Common 17-83] Releasing license: Synthesis
+21 Infos, 43 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:32 ; elapsed = 00:00:30 . Memory (MB): peak = 2881.465 ; gain = 16.008 ; free physical = 2060 ; free virtual = 5811
+INFO: [Common 17-1381] The checkpoint '/home/ubuntu/Vivado/Fir/Fir.runs/synth_1/fir.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file fir_utilization_synth.rpt -pb fir_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Tue Mar 18 00:27:27 2025...
