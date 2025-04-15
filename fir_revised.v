@@ -73,8 +73,8 @@ module fir
     reg        y_buffer_is_full;
     reg [31:0] data_buffer;
     reg        data_buffer_is_full;
-    reg [31:0] RAM_0x10;
-    reg [5:0]  RAM_0x14;
+    reg [31:0] data_length;
+    reg [5:0]  tap_length;
     reg [5:0]  tap_input_len;
 
     reg [1:0]  ap_state;
@@ -120,7 +120,7 @@ module fir
     wire [11:0] tap_AR;
 
     reg         refresh_done_f;
-    reg [31:0]  x_cnt;
+    reg [5:0]  x_cnt;
     wire [11:0] data_A_tmp;
 
     reg [31:0]  h_reg;
@@ -135,7 +135,7 @@ module fir
     wire [31:0] data_output;
 
     assign sm_tlast  = sm_tlast_reg;
-    assign final_Y   = (data_output_length == RAM_0x10);
+    assign final_Y   = (data_output_length == data_length);
 
     // -------------------------------------------------------------------
     // BRAM tap RAM assignments
@@ -154,8 +154,8 @@ module fir
     // -------------------------------------------------------------------
     // Read data assignment
     // -------------------------------------------------------------------
-    assign rdata = (araddr_buffer == 12'h10) ? RAM_0x10 :
-                   (araddr_buffer == 12'h14) ? RAM_0x14 :
+    assign rdata = (araddr_buffer == 12'h10) ? data_length :
+                   (araddr_buffer == 12'h14) ? tap_length :
                    (araddr_buffer == 12'h00) ? ap_control :
                                                tap_Do;
 
@@ -165,7 +165,7 @@ module fir
     // BRAM data RAM assignments
     // -------------------------------------------------------------------
     assign data_A_tmp = (k != 0) ? 
-                        ((k <= x_cnt) ? 4 * (x_cnt - k) : 4 * (RAM_0x14 + x_cnt - k))
+                        ((k <= x_cnt) ? 4 * (x_cnt - k) : 4 * (tap_length + x_cnt - k))
                         : 4 * x_cnt;
 
     assign data_WE = ap_idle ? 
@@ -264,35 +264,21 @@ module fir
     end
 
     // -------------------------------------------------------------------
-    // Data length registers (for RAM_0x10 and RAM_0x14)
+    // Data length registers (for data_length and tap_length)
     // -------------------------------------------------------------------
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
-            RAM_0x10 <= 0;
+            data_length <= 0;
         end else begin
-            RAM_0x10 <= (awaddr_buffer == 12'h10 && wready && wvalid) ? wdata : RAM_0x10;
+            data_length <= (awaddr_buffer == 12'h10 && wready && wvalid) ? wdata : data_length;
         end
     end
 
     always @(posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
-            RAM_0x14 <= 0;
+            tap_length <= 0;
         end else begin
-            RAM_0x14 <= (awaddr_buffer == 12'h14 && wready && wvalid) ? wdata : RAM_0x14;
-        end
-    end
-
-    // -------------------------------------------------------------------
-    // tap_input_len register
-    // -------------------------------------------------------------------
-    always @(posedge axis_clk or negedge axis_rst_n) begin
-        if (~axis_rst_n) begin
-            tap_input_len <= 0;
-        end else begin
-            tap_input_len <= (~ap_idle) ? 0 :
-                             (tap_input_len == 31) ? 31 :
-                             (wready && wvalid && (awaddr_buffer[11:8] == 0) && (awaddr_buffer[7] == 1)) ? 
-                                  tap_input_len + 1 : tap_input_len;
+            tap_length <= (awaddr_buffer == 12'h14 && wready && wvalid) ? wdata : tap_length;
         end
     end
 
@@ -363,44 +349,6 @@ module fir
     end
 
     // -------------------------------------------------------------------
-    // Stream slave interface FSM (ss_state)
-    // -------------------------------------------------------------------
-    always @* begin
-        case (ss_state)
-            SSDONE: begin
-                if (ss_tvalid) begin
-                    ss_idle       = 1;
-                    ss_state_next = SSIDLE;
-                end else begin
-                    ss_idle       = 0;
-                    ss_state_next = SSDONE;
-                end
-            end
-            SSIDLE: begin
-                if (ss_tlast) begin
-                    ss_idle       = 1;
-                    ss_state_next = SSDONE;
-                end else begin
-                    ss_idle       = 1;
-                    ss_state_next = SSIDLE;
-                end
-            end
-            default: begin
-                ss_idle       = 0;
-                ss_state_next = SSDONE;
-            end
-        endcase 
-    end
-
-    always @(posedge axis_clk or negedge axis_rst_n) begin
-        if (~axis_rst_n) begin
-            ss_state <= SSDONE;
-        end else begin
-            ss_state <= ss_state_next;
-        end
-    end
-
-    // -------------------------------------------------------------------
     // Stream master interface FSM (sm_state)
     // -------------------------------------------------------------------
     always @* begin
@@ -449,7 +397,7 @@ module fir
         end else begin
             ss_tready_reg <= (ss_tready && ss_tvalid) ? 0 :
                              (~refresh_done_f)     ? 0 :
-                             ((~data_buffer_is_full && data_input_length != RAM_0x10) ? 1 : 0);
+                             ((~data_buffer_is_full && data_input_length != data_length) ? 1 : 0);
         end
     end
 
@@ -461,12 +409,12 @@ module fir
             k <= 0;
         end else begin
             if (k == 0)
-                k <= (ap_idle) ? 0 : ((data_output_length == RAM_0x10 - 1) ? k + 1 : 
+                k <= (ap_idle) ? 0 : ((data_output_length == data_length - 1) ? k + 1 : 
                                          (data_buffer_is_full)   ? k + 1 : k);
-            else if (k == RAM_0x14 - 1)
+            else if (k == tap_length - 1)
                 k <= (ap_idle) ? 0 : ((y_buffer_is_full) ? k : 0);
             else
-                k <= (ap_idle) ? 0 : ((k == RAM_0x14 - 1) ? 0 : k + 1);
+                k <= (ap_idle) ? 0 : ((k == tap_length - 1) ? 0 : k + 1);
         end
     end
 
@@ -487,8 +435,8 @@ module fir
             block_first_data <= 1;
         end else begin
             x_cnt <= ap_done ? 0 :
-                     ((ap_idle == 0) && (k == RAM_0x14 - 1)) ?
-                         (y_buffer_is_full ? x_cnt : ((x_cnt == RAM_0x14 - 1) ? 0 : x_cnt + 1))
+                     ((ap_idle == 0) && (k == tap_length - 1)) ?
+                         (y_buffer_is_full ? x_cnt : ((x_cnt == tap_length - 1) ? 0 : x_cnt + 1))
                          : x_cnt;
             block_first_data <= ap_done ? 1 : (k == 3 ? 0 : block_first_data);
         end
@@ -524,8 +472,8 @@ module fir
             step_counter <= 0;
         end else begin
             y_tmp_reg    <= (k == 3) ? m_tmp_reg : (ap_idle == 0 ? ((y_counter == 4) ? y_tmp_reg : m_tmp_reg + y_tmp_reg) : 0);
-            step_counter <= (k == 3) ? 0 : (ap_idle == 0 ? ((y_counter == 4) ? step_counter : ((step_counter == RAM_0x14 - 1) ? 0 : step_counter + 1)) : 0);
-            y_counter    <= (ap_idle) ? 0 : ((k == RAM_0x14 - 1 || k == 0) ? ((y_counter < 4) ? y_counter + 1 : y_counter) : (k == 3 ? 0 : y_counter));
+            step_counter <= (k == 3) ? 0 : (ap_idle == 0 ? ((y_counter == 4) ? step_counter : ((step_counter == tap_length - 1) ? 0 : step_counter + 1)) : 0);
+            y_counter    <= (ap_idle) ? 0 : ((k == tap_length - 1 || k == 0) ? ((y_counter < 4) ? y_counter + 1 : y_counter) : (k == 3 ? 0 : y_counter));
         end
     end
 
@@ -587,7 +535,7 @@ module fir
         end
     end
 
-    assign sm_tdata = (data_output_length == RAM_0x10) ? 0 : y_buffer;
+    assign sm_tdata = (data_output_length == data_length) ? 0 : y_buffer;
 
     // -------------------------------------------------------------------
     // Data input length counter
