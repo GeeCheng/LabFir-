@@ -57,7 +57,7 @@ module fir
     assign      arready = arready_reg;
     reg [11:0]  araddr_buffer;
     reg         araddr_buffer_is_full;
-    reg [11:0]  rvalid_reg;
+    reg         rvalid_reg;
     assign      rvalid = rvalid_reg;
     
     reg [31:0] RAM_0x10;
@@ -113,7 +113,7 @@ module fir
     
     reg refresh_done_f;
     
-    reg [31:0] x_cnt;
+    reg [5:0] x_cnt;
     
     wire [11:0] data_A_tmp;
     
@@ -127,12 +127,13 @@ module fir
     
     reg [31:0] data_output_length;
     wire [31:0] data_output;
+    wire        final_Y;
 
     assign sm_tlast = sm_tlast_reg;
     assign final_Y = data_output_length == RAM_0x10;
 
     assign tap_EN = (ap_idle) ? (awaddr_buffer[11:8] == 4'd0 && awaddr_buffer[7] == 1'b1) || (tap_AR[11:8] == 4'd0 && tap_AR[7] == 1'b1)
-                          : (k > 33) || (k == 0) ? 0 : 1;    
+                          : 1;    
     assign tap_WE = (ap_idle && wready && wvalid && (awaddr_buffer[11:8] == 4'd0 && awaddr_buffer[7] == 1'b1)) ? 4'b1111 : 4'b0000;
     assign tap_A  = (wready && wvalid && ap_idle) ? awaddr_buffer[6:0] : tap_AR[6:0];
     assign tap_Di = wdata;
@@ -442,15 +443,17 @@ module fir
             x_reg   <= (ap_idle == 0) ? (k > RAM_0x14 + 1) ? 0 : (k == 1 || k == 0) ? 0 : data_Do : 0;
         end
     end
-    
+
+    (* use_dsp = "yes" *) wire [31:0] mult_result = h_reg * x_reg;
+
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             m_tmp_reg   <= 0;
         end else begin
-            m_tmp_reg   <= ap_idle == 0  ? h_reg * x_reg : 0;
+            m_tmp_reg   <= ap_idle == 0  ? mult_result : 0;
         end
     end
-    
+
     always @ (posedge axis_clk or negedge axis_rst_n) begin
         if (~axis_rst_n) begin
             y_tmp_reg   <= 0;
