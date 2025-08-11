@@ -459,9 +459,11 @@ module fir
         if (~axis_rst_n) begin
             m_tmp_reg <= 0;
         end else begin
-            m_tmp_reg <= (ap_idle == 0) ? h_reg * x_reg : 0;
+            m_tmp_reg <= (ap_idle == 0) ? mult_result : 0;
         end
     end
+
+    (* use_dsp = "yes" *) wire [31:0] mult_result = h_reg * x_reg;
 
     reg [5:0] y_counter;
     reg [5:0] step_counter;
